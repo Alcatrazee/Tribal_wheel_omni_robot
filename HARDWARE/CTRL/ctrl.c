@@ -432,9 +432,8 @@ float PID_V(u8 axis){
 	return out;
 }
 
-#define max_speed 650
+#define max_speed 200
 #define min_speed -max_speed
-u16 target=160;
 u8 axis_tracker=0;
 void Action(void){
 	float linear_v[3] = {0,0,0};						//control output array
@@ -448,6 +447,7 @@ void Action(void){
 		}
 		linear_vxy[2]=Angle_PID(Exp_State.angle);											// angle lock
 		
+		// velocity limitation
 		if(linear_vxy[1]>=max_speed)
 			linear_vxy[1]=max_speed;
 		else if(linear_vxy[1]<=min_speed)
@@ -463,8 +463,9 @@ void Action(void){
 		else if(linear_vxy[2]<=min_speed)
 			linear_vxy[2]=min_speed;
 		
-	Speed_Moto_Control(linear_vxy,linear_v);
-	Move(linear_v);
+		// inverse kinemetic
+		Speed_Moto_Control(linear_vxy,linear_v);
+		Move(linear_v);
 }
 
 void Calculate_State(void){

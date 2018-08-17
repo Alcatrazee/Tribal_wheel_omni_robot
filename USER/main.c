@@ -35,6 +35,7 @@ CPU_STK CTRL_TASK_STK[CTRL_STK_SIZE];
 void CTRL_task(void *p_arg);
 
 void BSP_Init(void);
+void IMU_get_offset(void);
 
 OS_SEM MySem;
 OS_SEM MySem2;
@@ -242,19 +243,20 @@ void BSP_Init(void){
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2); //中断分组配置
 	LED_Init();         														//LED初始化	
 	uart_init(115200);															//初始化串口波特率为115200
-	uart2_init(112500);	
+	uart2_init(112500);															//初始化串口波特率为115200
 	uart3_init(115200);														  //初始化串口波特率为112500
 	PWM_Init(2800-1,6-1);
 	stop_all();
 	EXTIX_Init();
+	IMU_get_offset();
 	printf("peripherals init complete...\r\n");
 	Process_finish_flag=1;
 }
 
-void IMU_get_offset(){
-	if(!Process_finish_flag){
-		Data_Process();
-		State.angle_offset = State.angle;
-		State.angle -=State.angle_offset;
-	}
+void IMU_get_offset(void){
+	while(Process_finish_flag);
+	Data_Process();
+	State.angle_offset = State.angle;
+	State.angle -=State.angle_offset;
+
 }

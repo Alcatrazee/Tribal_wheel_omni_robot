@@ -5,7 +5,7 @@
 #define data_num 11
 
 u8 USART2_RX_DAT[data_num];
-u8 Process_finish_flag=0;
+u8 Process_finish_flag=1;
 u8 USART2_RX_COUNT;
 
 //global variables
@@ -139,9 +139,10 @@ void Data_Process(void){
 				Yaw=	(float)((short)(USART2_RX_DAT[7]<<8)|USART2_RX_DAT[6])/32768*180;		
 				Temperature = (float)((short)(USART2_RX_DAT[9]<<8)|USART2_RX_DAT[8])/340+21;
 				IMUdata_Serialization();
-				State.angle = continue_Yaw;
+				State.angle = continue_Yaw-State.angle_offset;
 				break;
 	}
+	Process_finish_flag = 1;
 }
 
 
