@@ -1,7 +1,7 @@
 #include "common_fcn.h"
 #include "includes.h"
 
-extern long steps1,steps2,steps3,steps_Y,steps_X;
+extern long steps1,steps2,steps3,steps_L,steps_R;
 
 void EXTI9_5_IRQHandler(void)
 {
@@ -56,9 +56,9 @@ void EXTI15_10_IRQHandler(void)
   }else if(EXTI_GetITStatus(EXTI_Line14)!=RESET)
 	{
 	 if(PEin(6))	{
-			steps_X--;
+			steps_R--;
 	 }else{
-			steps_X++; 
+			steps_R++; 
 	 }
 	 EXTI_ClearITPendingBit(EXTI_Line14); 
 	}
@@ -84,9 +84,9 @@ void EXTI1_IRQHandler(void)
 	OSIntEnter();
 	if(EXTI_GetITStatus(EXTI_Line1)!=RESET){
 	 if(PEin(3))	{
-			steps_Y--;
+			steps_L++;
 	 }else{
-			steps_Y++; 
+			steps_L--; 
 	 }
 	 EXTI_ClearITPendingBit(EXTI_Line1); //清除LINE6上的中断标志位 
 	}

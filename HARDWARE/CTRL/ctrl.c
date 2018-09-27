@@ -13,7 +13,7 @@ u8 action_mode=position_mode;
 
 extern RB_State State;
 extern RB_State Exp_State;
-extern long steps1,steps2,steps3,steps_X,steps_Y;
+extern long steps1,steps2,steps3,steps_L,steps_R;
 
 #define max_pwm 1400
 #define min_pwm -max_pwm
@@ -99,9 +99,9 @@ void Speed_Moto_Control(float linear_xyz[3],float linear_v[4])
 #define max_out 800
 float Angle_PID(float exp_angle){
 	OS_ERR err;
-	float 	Kp_a = 70.000,
+	float 	Kp_a = 90.000,
 					Ki_a = 00.0000000,
-					Kd_a = 6.0000;
+					Kd_a = 6.10000;
 	float error_sum=0,error,d_error=0;
 	static float error_f;
 	float out;
@@ -138,12 +138,13 @@ float Angle_PID(float exp_angle){
 #define radius 38.0f
 void Cult_pos(int steps_delta[2],float pos[2],float theta2){
 	OS_ERR err;
-	float distance = 0.0f;														// the distance of a straight line that the viechle have gone in a period
-	float delta_y = 0.0f,delta_x = 0.0f;							// distance of movement in two direction, global frame,never change the direction
-	static float former_x=0,former_y=0;								// to store the former position of two axis,used to calculate the next position
-	float theta1=0;																			// direction of the movement vector, robot frame
-	float WX=0,WY=0;																			// maybe just two temporary variables,will remove when i got back.
-	float dis_X=0,dis_Y=0;																// distance of movement of robot's in it's own frame
+	float distance = 0.0f;
+	float delta_y = 0.0,delta_x = 0.0;
+	static float former_x=0,former_y=0;
+	float theta1;
+	float WLX,WLY,WRX,WRY;
+	float dis_L,dis_R;
+	float combine_vector[2];															// distance of movement of robot's in it's own frame
 	float v_x=0,v_y=0;																// velocity of movement of robot's in it's own frame
 	static float linear_former_vxy[2]={0,0};								// to store the former value of velocity, just used to calculate the accelartion
 	static float pos_temp[2]={0,0};
@@ -157,32 +158,30 @@ void Cult_pos(int steps_delta[2],float pos[2],float theta2){
 	dt = time_now - time_last;
 	time_last = time_now;
 	
-//	float test_x=0,test_y=0,test_theta1=0;
+	dis_L = steps_delta[0]*0.1193805f;
+	dis_R = steps_delta[1]*0.1193805f;
 	
-	dis_Y = steps_delta[0]*0.1193805f;
-	dis_X = steps_delta[1]*0.1193805f;
+	WLX = -dis_L*0.70711f;
+	WLY = dis_L*0.70711f;
+	WRX = dis_R*0.70711f;
+	WRY = dis_R*0.70711f;
 	
-	v_x=dis_X/dt;																		// x axis
-	v_y=dis_Y/dt;																								// set the dt to 0 to calculate in next loop
+	combine_vector[0] = WLX+WRX;
+	combine_vector[1] = WLY+WRY;
 	
-	WX = dis_X;
-	WY = dis_Y;
-
-	theta1 = atan(WY/WX);															// improvement: 1.use atan2 instead of atan to make our code better
-//	test_theta1 = atan2(dis_Y,dis_X);									// test code
-																										//							2.remove variables: WX and WY to save memory
+	theta1 = atan(combine_vector[1]/combine_vector[0]);
+	
 	theta2 = theta2*3.14f/180;
 	
-	distance = sqrt(WX*WX+WY*WY);											
-	linear_vxyc[2]=sqrt(v_x*v_x+v_y*v_y);
+	distance = sqrt(combine_vector[0]*combine_vector[0]+combine_vector[1]*combine_vector[1]);
 	
-	if(WY>=0&&WX<0){
+	if(combine_vector[1]>=0&&combine_vector[0]<0){
 		theta1+=3.1415926f;
-	}else if(WY<0&&WX<0){
+	}else if(combine_vector[1]<0&&combine_vector[0]<0){
 		theta1-=3.14159f;
-	}else if(WX==0&&WY>=0){
+	}else if(combine_vector[0]==0&&combine_vector[1]>=0){
 		theta1 = 1.57;
-	}else if(WX==0&&WY<0){
+	}else if(combine_vector[0]==0&&combine_vector[1]<0){
 		theta1 = -1.57;
 	}
 	
@@ -204,12 +203,12 @@ void Cult_pos(int steps_delta[2],float pos[2],float theta2){
 	pos_temp[0] = former_x + delta_x;
 	pos_temp[1] = former_y + delta_y;
 	
-	pos[0] = pos_temp[0]-(short)get_pos_offset_fourier(theta2,Axis_x);
-	pos[1] = pos_temp[1]-(short)get_pos_offset_fourier(theta2,Axis_y);
-	
+//	pos[0] = pos_temp[0]-(short)get_pos_offset_fourier(theta2,Axis_x);
+//	pos[1] = pos_temp[1]-(short)get_pos_offset_fourier(theta2,Axis_y);
+	pos[0] = pos_temp[0];
+	pos[1] = pos_temp[1];
 	former_x = pos_temp[0];
 	former_y = pos_temp[1];
-
 }
 
 
@@ -307,7 +306,7 @@ float get_pos_offset_fourier(float angle,u8 axis){
 	return val;
 }
 
-#define vol_max 450
+#define vol_max 600
 #define vol_min -vol_max
 #define error_sum_max    2000
 #define error_sum_min    -error_sum_max
@@ -432,7 +431,7 @@ float PID_V(u8 axis){
 	return out;
 }
 
-#define max_speed 200
+#define max_speed 500
 #define min_speed -max_speed
 u8 axis_tracker=0;
 void Action(void){
@@ -458,13 +457,14 @@ void Action(void){
 		else if(linear_vxy[0]<=min_speed)
 			linear_vxy[0]=min_speed;
 		
-		if(linear_vxy[2]>=max_speed)
-			linear_vxy[2]=max_speed;
-		else if(linear_vxy[2]<=min_speed)
-			linear_vxy[2]=min_speed;
+//		if(linear_vxy[2]>=max_speed)
+//			linear_vxy[2]=max_speed;
+//		else if(linear_vxy[2]<=min_speed)
+//			linear_vxy[2]=min_speed;
 		
 		// inverse kinemetic
 		Speed_Moto_Control(linear_vxy,linear_v);
+		printf("%f\t%f\t%f\r\n",linear_v[0],linear_v[1],linear_v[2]);
 		Move(linear_v);
 }
 
@@ -473,7 +473,7 @@ void Calculate_State(void){
 	float steps1_delta,steps2_delta,steps3_delta;
 	int steps_EOD[2];
 	float current_steps1,current_steps2,current_steps3;
-	static float steps1_former=0,steps2_former=0,steps3_former=0,steps_Y_former=0,steps_X_former=0;
+	static float steps1_former=0,steps2_former=0,steps3_former=0,steps_L_former=0,steps_R_former=0;
 	static float pos_EOD[2];			//[0] is X axis 
 	float dt = 0;		
 	float time_now=0;
@@ -483,13 +483,13 @@ void Calculate_State(void){
 	dt = time_now - time_last;
 	time_last = time_now;
 //Calculation of each encoder
-	steps_EOD[0] = steps_Y - steps_Y_former;
-	steps_EOD[1] = steps_X - steps_X_former;
+	steps_EOD[0] = steps_L - steps_L_former;
+	steps_EOD[1] = steps_R - steps_R_former;
 	
 	Cult_pos(steps_EOD,pos_EOD,State.angle);
 	
-	steps_Y_former = steps_Y;
-	steps_X_former = steps_X;
+	steps_L_former = steps_L;
+	steps_R_former = steps_R;
 	
 //  update states		
 	State.frame_X=pos_EOD[0];

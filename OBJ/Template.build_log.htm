@@ -21,24 +21,29 @@ Target DLL:      CMSIS_AGDI.dll V1.27.5.0
 Dialog DLL:      TCM.DLL V1.27.0.0
  
 <h2>Project:</h2>
-C:\Users\Shinelon\OneDrive\全向轮小车\全向底盘（三轮）\trible_wheel_omni_robot_UCOSIII\USER\Template.uvprojx
+C:\Users\Shinelon\OneDrive\omni_robot\Tribal\trible_wheel_omni_robot_UCOSIII\USER\Template.uvprojx
 Project File Date:  07/19/2018
 
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 4 (build 422)', folder: 'E:\KEIL5\app\ARM\ARMCC\Bin'
 Build target 'Template'
 compiling ctrl.c...
+..\HARDWARE\CTRL\ctrl.c(148): warning:  #177-D: variable "v_x"  was declared but never referenced
+  	float v_x=0,v_y=0;																// velocity of movement of robot's in it's own frame
+..\HARDWARE\CTRL\ctrl.c(148): warning:  #177-D: variable "v_y"  was declared but never referenced
+  	float v_x=0,v_y=0;																// velocity of movement of robot's in it's own frame
+..\HARDWARE\CTRL\ctrl.c: 2 warnings, 0 errors
 linking...
-Program Size: Code=74496 RO-data=2256 RW-data=528 ZI-data=14352  
+Program Size: Code=75676 RO-data=2260 RW-data=528 ZI-data=14352  
 FromELF: creating hex file...
-"..\OBJ\Template.axf" - 0 Error(s), 0 Warning(s).
+"..\OBJ\Template.axf" - 0 Error(s), 2 Warning(s).
 
 <h2>Collection of Component include folders:</h2>
   .\RTE\_Template
   E:\KEIL5\app\ARM\PACK\Keil\STM32F4xx_DFP\2.12.0\Drivers\CMSIS\Device\ST\STM32F4xx\Include
 
 <h2>Collection of Component Files used:</h2>
-Build Time Elapsed:  00:00:01
+Build Time Elapsed:  00:00:02
 </pre>
 </body>
 </html>

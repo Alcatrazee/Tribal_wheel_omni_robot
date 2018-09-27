@@ -9,7 +9,7 @@
 RB_State State={0,0,0,0,0,0,0,0};
 RB_State Exp_State={0,0,0,0,0,0,0,0};
 
-long steps1=0,steps2=0,steps3=0,steps4=0,steps_X=0,steps_Y=0;
+long steps1=0,steps2=0,steps3=0,steps4=0,steps_L=0,steps_R=0;
 
 //common functions definition
 

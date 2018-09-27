@@ -157,7 +157,7 @@
           <Type>0</Type>
           <LineNumber>66</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134219846</Address>
+          <Address>134219866</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -171,66 +171,34 @@
         <Bp>
           <Number>1</Number>
           <Type>0</Type>
-          <LineNumber>142</LineNumber>
+          <LineNumber>466</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134231166</Address>
+          <Address>134226472</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>C:\Users\Shinelon\OneDrive\鍏ㄥ悜杞皬杞?鍏ㄥ悜搴曠洏锛堜笁杞級\trible_wheel_omni_robot_UCOSIII\HARDWARE\USART2\usart2.c</Filename>
+          <Filename>..\HARDWARE\CTRL\ctrl.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\Template\../HARDWARE/USART2/usart2.c\142</Expression>
+          <Expression>\\Template\../HARDWARE/CTRL/ctrl.c\466</Expression>
         </Bp>
         <Bp>
           <Number>2</Number>
           <Type>0</Type>
-          <LineNumber>79</LineNumber>
+          <LineNumber>447</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134230488</Address>
+          <Address>134226280</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>C:\Users\Shinelon\OneDrive\鍏ㄥ悜杞皬杞?鍏ㄥ悜搴曠洏锛堜笁杞級\trible_wheel_omni_robot_UCOSIII\HARDWARE\USART2\usart2.c</Filename>
+          <Filename>..\HARDWARE\CTRL\ctrl.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\Template\../HARDWARE/USART2/usart2.c\79</Expression>
-        </Bp>
-        <Bp>
-          <Number>3</Number>
-          <Type>0</Type>
-          <LineNumber>257</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>134219300</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>C:\Users\Shinelon\OneDrive\鍏ㄥ悜杞皬杞?鍏ㄥ悜搴曠洏锛堜笁杞級\trible_wheel_omni_robot_UCOSIII\USER\main.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\Template\main.c\257</Expression>
-        </Bp>
-        <Bp>
-          <Number>4</Number>
-          <Type>0</Type>
-          <LineNumber>258</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>134219310</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>C:\Users\Shinelon\OneDrive\鍏ㄥ悜杞皬杞?鍏ㄥ悜搴曠洏锛堜笁杞級\trible_wheel_omni_robot_UCOSIII\USER\main.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\Template\main.c\258</Expression>
+          <Expression>\\Template\../HARDWARE/CTRL/ctrl.c\447</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
