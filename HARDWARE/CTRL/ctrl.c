@@ -7,8 +7,6 @@
 float Kp_x,Ki_x,Kd_x;																						//parameter needed to be made
 short exp_x=0,exp_y=0;																					//position expected
 float linear_vxy[3]={0};																				//linear velocity of the robot,calculated by the expected velocity,not the current velocity
-float linear_vxyc[3]={0};																				//current linear velocity,the 0 is the x axis ,and the 1 is y axis
-float linear_axyc[3]={0};																				//current linear accleration,the 0 is the x axis ,and the 1 is y axis
 u8 action_mode=position_mode;
 
 extern RB_State State;
@@ -99,7 +97,7 @@ void Speed_Moto_Control(float linear_xyz[3],float linear_v[4])
 #define max_out 800
 float Angle_PID(float exp_angle){
 	OS_ERR err;
-	float 	Kp_a = 90.000,
+	float 	Kp_a = 70.000,
 					Ki_a = 00.0000000,
 					Kd_a = 6.10000;
 	float error_sum=0,error,d_error=0;
@@ -145,9 +143,9 @@ void Cult_pos(int steps_delta[2],float pos[2],float theta2){
 	float WLX,WLY,WRX,WRY;
 	float dis_L,dis_R;
 	float combine_vector[2];															// distance of movement of robot's in it's own frame
-	float v_x=0,v_y=0;																// velocity of movement of robot's in it's own frame
 	static float linear_former_vxy[2]={0,0};								// to store the former value of velocity, just used to calculate the accelartion
 	static float pos_temp[2]={0,0};
+	float v_x=0,v_y=0;
 	
 	float dt = 0;		
 	float time_now=0;
@@ -191,14 +189,14 @@ void Cult_pos(int steps_delta[2],float pos[2],float theta2){
 //	test_x = cos(theta2)*dis_X+sin(theta2)*dis_Y;			// test code
 //	test_y = -sin(pi/2+theta2)*dis_X+cos(pi/2+theta2)*dis_Y;		// test code
 	
-	linear_vxyc[0]=linear_vxyc[2]*cos(theta1+theta2);												//x axis
-	linear_vxyc[1]=linear_vxyc[2]*sin(theta1+theta2);
+	State.frame_Vx=delta_x/dt;												//x axis
+	State.frame_Vy=delta_y/dt;
 	
-	linear_axyc[0]=(linear_vxyc[0]-linear_former_vxy[0])/dt;
-	linear_axyc[1]=(linear_vxyc[1]-linear_former_vxy[1])/dt;
-	
-	linear_former_vxy[0]=linear_vxyc[0];
-	linear_former_vxy[1]=linear_vxyc[1];
+//	linear_axyc[0]=(linear_vxyc[0]-linear_former_vxy[0])/dt;
+//	linear_axyc[1]=(linear_vxyc[1]-linear_former_vxy[1])/dt;
+//	
+//	linear_former_vxy[0]=linear_vxyc[0];
+//	linear_former_vxy[1]=linear_vxyc[1];
 	
 	pos_temp[0] = former_x + delta_x;
 	pos_temp[1] = former_y + delta_y;
@@ -306,7 +304,7 @@ float get_pos_offset_fourier(float angle,u8 axis){
 	return val;
 }
 
-#define vol_max 600
+#define vol_max 450
 #define vol_min -vol_max
 #define error_sum_max    2000
 #define error_sum_min    -error_sum_max
@@ -464,7 +462,7 @@ void Action(void){
 		
 		// inverse kinemetic
 		Speed_Moto_Control(linear_vxy,linear_v);
-		printf("%f\t%f\t%f\r\n",linear_v[0],linear_v[1],linear_v[2]);
+//		printf("%f\t%f\t%f\r\n",linear_v[0],linear_v[1],linear_v[2]);
 		Move(linear_v);
 }
 
@@ -494,10 +492,6 @@ void Calculate_State(void){
 //  update states		
 	State.frame_X=pos_EOD[0];
 	State.frame_Y=pos_EOD[1];
-	State.frame_Vx=linear_vxyc[0];
-	State.frame_Vy=linear_vxyc[1];
-	State.frame_ax=linear_axyc[0];
-	State.frame_ay=linear_axyc[1];
 	
 //calculate the angular velocity of each wheel		
 	current_steps1 = steps1;
@@ -561,3 +555,6 @@ void Velocity_mode(void){
 	Exp_State.frame_Y = State.frame_Y;
 }
 
+void P2P_algorithm(void){
+	
+}

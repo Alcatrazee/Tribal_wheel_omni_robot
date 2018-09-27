@@ -81,6 +81,7 @@ void uart_init(u32 bound){
 }
 
 #define buf_length 13
+
 u8 rec[buf_length];
 u8 counter_usart1;
 u8 Process_finish_flag_exp_state = 1;
@@ -156,57 +157,87 @@ extern RB_State Exp_State;
 extern 	float Kpvx,Kivx,Kdvx;
 u8 rec_bit=0;
 void Process(){
-	char str[13]={0};
-	u8 i,j;
-	for(i=0;i<counter_usart1;i++){
-		if(rec[i]==' '){
-			break;
-		}
+	float cvt_result[usart1_data_num]={0};
+	
+	split_message(cvt_result);
+	
+	switch(rec[0]){
+		case 'G':	/*if(i<counter_usart1){
+								for(j=0;j<i;j++){
+									str[j] = rec[j+1];
+								}
+								Exp_State.frame_X = atof(str);
+								
+								for(j=0;j<i;j++){													//clear
+									str[j] = 0;
+								}
+								
+								for(j=i;j<counter_usart1-3;j++){
+									str[j-i] = rec[j+1];
+								}
+								Exp_State.frame_Y = atof(str);
+								
+								for(j=0;j<i;j++){													//clear
+									str[j] = 0;
+								}
+								
+								for(j=i;j<counter_usart1-3;j++){
+									str[j-i] = rec[j+1];
+								}
+								Exp_State.angle = atof(str);							//fill the array of angle
+								action_mode = position_mode;
+							}*/
+							Exp_State.frame_X = cvt_result[0];
+							Exp_State.frame_Y = cvt_result[1];
+							Exp_State.angle = cvt_result[2];							//fill the array of angle
+							action_mode = position_mode;
+							break;
+		case 'V':	/*if(i<counter_usart1){
+								for(j=0;j<i;j++){													//fill the array of Vx
+									str[j] = rec[j+1];
+								}
+								Exp_State.frame_Vx = atof(str);
+								
+								for(j=0;j<i;j++){													//clear
+									str[j] = 0;
+								}
+								
+								for(j=i;j<counter_usart1-3;j++){					//fill the array of Vy
+									str[j-i] = rec[j+1];
+								}
+								Exp_State.frame_Vy = atof(str);
+								
+								for(j=0;j<i;j++){													//clear
+									str[j] = 0;
+								}
+								
+								for(j=i;j<counter_usart1-3;j++){					//fill the array of angle
+									str[j-i] = rec[j+1];
+								}
+								
+								Exp_State.angle = atof(str);
+								action_mode = velocity_mode;
+							}*/
+							Exp_State.frame_Vx = cvt_result[0];
+							Exp_State.frame_Vy = cvt_result[1];
+							Exp_State.angle = cvt_result[2];							//fill the array of angle
+							action_mode = velocity_mode;
+							break;
 	}
-	if(i<counter_usart1){
-		for(j=0;j<i;j++){
-			str[j] = rec[j+1];
+}
+
+void split_message(float split_result[usart1_data_num]){
+	u8 i=0,j=0;
+	char *a=0;
+	const char *p = " ";
+	a = strtok(rec,p);	
+	for(i=0;i<4;i++){
+		if(strcmp("G",a)&&strcmp("V",a)){
+			split_result[j] = atof(a);
+			j++;
 		}
-		Exp_State.frame_X = atof(str);
-		
-		for(j=0;j<i;j++){
-			str[j] = 0;
-		}
-		
-		for(j=i;j<counter_usart1-3;j++){
-			str[j-i] = rec[j+1];
-		}
-		Exp_State.frame_Y = atof(str);
+		a = strtok(NULL,p);	
 	}
-	/*
-	if(rec[0]=='G'){
-		for(i=0;i<6;i++){
-			str[i] = rec[i+1];
-		}
-		f = atof(str);
-		Exp_State.frame_X = f;
-		for(i=0;i<6;i++){
-			str[i] = rec[i+7];
-		}
-		f = atof(str);
-		Exp_State.frame_Y = f;
-		
-		rec_bit=1;
-		action_mode = position_mode;
-	}else if(rec[0]=='V'){
-		for(i=0;i<6;i++){
-			str[i] = rec[i+1];
-		}
-		f = atof(str);
-		Exp_State.frame_Vx = f;
-		for(i=0;i<6;i++){
-			str[i] = rec[i+7];
-		}
-		f = atof(str);
-		Exp_State.frame_Vy = f;	
-		action_mode = velocity_mode;
-	}
-	*/
 }
 //command: Gxxxx xxxx
 //				  xpos ypos

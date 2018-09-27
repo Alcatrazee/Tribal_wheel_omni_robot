@@ -16,8 +16,8 @@ CPU_STK LED_TASK_STK[LED_TASK_STK_SIZE];
 void Led_task(void *p_arg);
 
 // task2 is print task
-#define PRINT_TASK_PRIO	6
-#define PRINT_TASK_STK_SIZE 		128
+#define PRINT_TASK_PRIO	5
+#define PRINT_TASK_STK_SIZE 		256
 OS_TCB Print_Task_TaskTCB;
 CPU_STK PRINT_TASK_STK[PRINT_TASK_STK_SIZE];
 void Print_task(void *p_arg);
@@ -48,6 +48,8 @@ extern u8 USART2_RX_DAT[11];
 extern u8 Process_finish_flag;
 extern long steps1,steps2,steps3,steps_L,steps_R;
 extern u8 Process_finish_flag_exp_state;
+
+
 
 int main(void)
 {
@@ -100,7 +102,7 @@ void start_task(void *p_arg)
 	OSSchedRoundRobinCfg(DEF_ENABLED,1,&err);  
 #endif	
 	
-	OSSemCreate(&MySem,"My Sem",1,&err);	
+//	OSSemCreate(&MySem,"My Sem",1,&err);	
 //	OSSemCreate(&MySem2,"My Sem 2",1,&err);	
 //	OSQCreate(&MyQueue,"My Queue",40,&err);
 
@@ -170,7 +172,7 @@ void start_task(void *p_arg)
                  (OS_ERR 	* )&err);			
 								 
 //	OSTaskSuspend(&Gesture_Change_TaskTCB,&err);		 
-	OSTaskSuspend(&Print_Task_TaskTCB,&err);		 
+//	OSTaskSuspend(&Print_Task_TaskTCB,&err);		 
 //	OSTaskSuspend(&Ctrl_TaskTCB,&err);		 
 	
 	
@@ -188,6 +190,7 @@ void Led_task(void *p_arg)
 	}
 }
 
+extern float Yaw;
 void Print_task(void *p_arg)
 {
 	OS_ERR err;
@@ -196,7 +199,7 @@ void Print_task(void *p_arg)
 	{
 		OS_CRITICAL_ENTER();	//进入临界区
 		//Print_IMU_Data();
-		printf("%d\t%d\r\n",State.frame_X,State.frame_Y);
+		printf("%f\t%f\t%f\t%f\r\n",State.frame_Vx,State.frame_Vy,State.angle,Yaw);
 		OS_CRITICAL_EXIT();	//退出临界区
 		OSTimeDlyHMSM(0,0,0,20,OS_OPT_TIME_HMSM_STRICT,&err);
 	}
@@ -224,7 +227,7 @@ void Gesture_Change_task(void *p_arg)
 			Clear();
 			Process_finish_flag_exp_state = 1;
 		}
-		OSTimeDlyHMSM(0,0,0,5,OS_OPT_TIME_HMSM_STRICT,&err);
+		OSTimeDlyHMSM(0,0,0,2,OS_OPT_TIME_HMSM_STRICT,&err);
 	}
 }
 

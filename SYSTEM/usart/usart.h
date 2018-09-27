@@ -11,6 +11,9 @@
 #define tracking_mode 2
 #define releasing_mode 3
 
+
+#define usart1_data_num 3
+
 void UART1_Put_Char(unsigned char DataToSend);
 void UART1_Put2_Char(u8 arr[2]);
 void UART1_Put_String(char *p);
@@ -20,6 +23,7 @@ void UART1_Print_timestamp(void);
 void uart_init(u32 bound);
 void Process(void);
 void Clear(void);
+void split_message(float split_result[usart1_data_num]);
 
 extern u8 action_mode;
 
