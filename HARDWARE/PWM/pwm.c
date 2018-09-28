@@ -179,15 +179,19 @@ void stop(u8 motornum){
 	switch(motornum){
 		case motor1: 
 			TIM5->CCR1=0;
+			PCout(2)=0;
 		break;
 		case motor2:
 			TIM5->CCR2=0;
+			PCout(3)=0;
 		break;
 		case motor3:
 			TIM5->CCR3=0;
+			PAout(4)=0;
 		break;
 		case motor4:
 			TIM5->CCR4=0;
+			PAout(5)=0;
 		break;
 	}
 }

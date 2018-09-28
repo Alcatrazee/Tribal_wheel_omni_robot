@@ -18,6 +18,7 @@ void Velocity_mode(void);
 void P2P_algorithm(void);
 float Get_theta2(float target_coordinate[2]);
 float Velocity_controller(float target_coordinate_in_robot_frame[2]);
+void P2P_position_mode(void);
 
 #endif
 

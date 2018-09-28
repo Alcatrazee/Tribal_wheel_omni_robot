@@ -88,8 +88,9 @@ void Speed_Moto_Control(float linear_xyz[3],float linear_v[4])
 	 }else if(my_abs(linear_v[2])>=max_output){
 		 k=linear_v[2]/max_output;
 	 }
-	 if(k<0)																// use my_abs(k)
-		 k=-k;
+	 k = my_abs(k);
+//	 if(k<0)																// use my_abs(k)
+//		 k=-k;
 	 for(i=0;i<3;i++)
 		linear_v[i]/=k;
 }
@@ -149,7 +150,7 @@ void Cult_pos(int steps_delta[2],float pos[2],float theta2){
 	float time_now=0;
 	static float time_last=0;
 
-//get dt
+	//get dt
 	time_now = 5*(float)OSTimeGet(&err)/1000;
 	dt = time_now - time_last;
 	time_last = time_now;
@@ -165,36 +166,17 @@ void Cult_pos(int steps_delta[2],float pos[2],float theta2){
 	combine_vector[0] = WLX+WRX;
 	combine_vector[1] = WLY+WRY;
 	
-	theta1 = atan(combine_vector[1]/combine_vector[0]);
+	theta1 = atan2(combine_vector[1],combine_vector[0]);
 	
-	theta2 = theta2*3.14f/180;
+	theta2 = deg2rad(theta2);
 	
 	distance = sqrt(combine_vector[0]*combine_vector[0]+combine_vector[1]*combine_vector[1]);
-	
-	if(combine_vector[1]>=0&&combine_vector[0]<0){
-		theta1+=3.1415926f;
-	}else if(combine_vector[1]<0&&combine_vector[0]<0){
-		theta1-=3.14159f;
-	}else if(combine_vector[0]==0&&combine_vector[1]>=0){
-		theta1 = 1.57;
-	}else if(combine_vector[0]==0&&combine_vector[1]<0){
-		theta1 = -1.57;
-	}
-	
+
 	delta_x = distance*cos(theta1+theta2);
 	delta_y = distance*sin(theta1+theta2);
-
-//	test_x = cos(theta2)*dis_X+sin(theta2)*dis_Y;			// test code
-//	test_y = -sin(pi/2+theta2)*dis_X+cos(pi/2+theta2)*dis_Y;		// test code
 	
 	State.frame_Vx=delta_x/dt;												//x axis
 	State.frame_Vy=delta_y/dt;
-	
-//	linear_axyc[0]=(linear_vxyc[0]-linear_former_vxy[0])/dt;
-//	linear_axyc[1]=(linear_vxyc[1]-linear_former_vxy[1])/dt;
-//	
-//	linear_former_vxy[0]=linear_vxyc[0];
-//	linear_former_vxy[1]=linear_vxyc[1];
 	
 	pos_temp[0] = former_x + delta_x;
 	pos_temp[1] = former_y + delta_y;
@@ -427,6 +409,9 @@ float PID_V(u8 axis){
 	return out;
 }
 
+
+// function name: Action
+// 
 #define max_speed 500
 #define min_speed -max_speed
 u8 axis_tracker=0;
@@ -436,45 +421,39 @@ void Action(void){
 	
 	//  here we change the velocity depend on the ctrl mode
 	if(action_mode == position_mode)														//position mode:move to the point 
-		{
-			//Position_mode();
-			P2P_algorithm();																				// new point 2 point algorithm
-			Velocity_mode();
-		}else if(action_mode == velocity_mode){
-			Velocity_mode();
-		}
+	{
+		//Position_mode();
+		P2P_position_mode();
+	}else if(action_mode == velocity_mode){
+		Velocity_mode();
+	}
 
-		linear_vxy[2]=Angle_PID(Exp_State.angle);											// angle lock
+	linear_vxy[2]=Angle_PID(Exp_State.angle);											// angle lock
 		
-		// velocity limitation
-		if(linear_vxy[1]>=max_speed)
-			linear_vxy[1]=max_speed;
-		else if(linear_vxy[1]<=min_speed)
-			linear_vxy[1]=min_speed;
-		
-		if(linear_vxy[0]>=max_speed)
-			linear_vxy[0]=max_speed;
-		else if(linear_vxy[0]<=min_speed)
-			linear_vxy[0]=min_speed;
-		
-		// inverse kinemetic
-		Speed_Moto_Control(linear_vxy,linear_v);
-//		printf("%f\t%f\t%f\r\n",linear_v[0],linear_v[1],linear_v[2]);
-		if(Motion_ENABLE)
-			Move(linear_v);
-		else{
-			Run_as_vol(0,motor1);
-			Run_as_vol(0,motor2);
-			Run_as_vol(0,motor3);
-		}
-			
+	// velocity limitation
+	if(linear_vxy[1]>=max_speed)
+		linear_vxy[1]=max_speed;
+	else if(linear_vxy[1]<=min_speed)
+		linear_vxy[1]=min_speed;
+	
+	if(linear_vxy[0]>=max_speed)
+		linear_vxy[0]=max_speed;
+	else if(linear_vxy[0]<=min_speed)
+		linear_vxy[0]=min_speed;
+	
+	// inverse kinemetic
+	Speed_Moto_Control(linear_vxy,linear_v);
+	if(Motion_ENABLE)
+		Move(linear_v);
+	else{
+		stop_all();
+	}	
 }
 
 void Calculate_State(void){
 	OS_ERR err;
 	float steps1_delta,steps2_delta,steps3_delta;
 	int steps_EOD[2];
-	float current_steps1,current_steps2,current_steps3;
 	static float steps1_former=0,steps2_former=0,steps3_former=0,steps_L_former=0,steps_R_former=0;
 	static float pos_EOD[2];			//[0] is X axis 
 	float dt = 0;		
@@ -498,21 +477,17 @@ void Calculate_State(void){
 	State.frame_Y=pos_EOD[1];
 	
 //calculate the angular velocity of each wheel		
-	current_steps1 = steps1;
-	current_steps2 = steps2;
-	current_steps3 = steps3;
-
-	steps1_delta = current_steps1 - steps1_former;
-	steps2_delta = current_steps2 - steps2_former;
-	steps3_delta = current_steps3 - steps3_former;
+	steps1_delta = steps1 - steps1_former;
+	steps2_delta = steps2 - steps2_former;
+	steps3_delta = steps3 - steps3_former;
 
 	State.omega_wheel[0] = steps1_delta/dt;
 	State.omega_wheel[1] = steps2_delta/dt;
 	State.omega_wheel[2] = steps3_delta/dt;
 
-	steps1_former = current_steps1;
-	steps2_former = current_steps2;
-	steps3_former = current_steps3;
+	steps1_former = steps1;
+	steps2_former = steps2;
+	steps3_former = steps3;
 	//printf("%f\t%f\t%ld\t%ld\r\n",pos_EOD[0],pos_EOD[1],steps_X,steps_Y);
 }
 
@@ -543,6 +518,10 @@ void Position_mode(void){
 	linear_vxy[1] = roy;
 }
 
+void P2P_position_mode(void){
+		P2P_algorithm();																				// new point 2 point algorithm
+		Velocity_mode();
+}
 void Velocity_mode(void){
 	float tempx,tempy;
 	float deg_angle;
@@ -572,17 +551,20 @@ void P2P_algorithm(void){
 		combined_velocity=max_velocity;
 	else if(combined_velocity<=min_velocity)
 		combined_velocity=min_velocity;
+	
 	Exp_State.frame_Vx = cos(target_theta)*combined_velocity;
 	Exp_State.frame_Vy = sin(target_theta)*combined_velocity;
 }
 
 // param: 2axis coordinate which [0] is x axis [1] is y axis
 float Get_theta2(float target_coordinate[2]){	
-	target_coordinate[0] = cos(deg2rad(State.angle))*Exp_State.frame_X-sin(deg2rad(State.angle))*Exp_State.frame_Y-State.frame_X;
-	target_coordinate[1] = sin(deg2rad(State.angle))*Exp_State.frame_X+cos(deg2rad(State.angle))*Exp_State.frame_Y-State.frame_Y;
-	return atan2(target_coordinate[1],target_coordinate[0]);
+	float target_in_global[2];
+	target_in_global[0] = Exp_State.frame_X;
+	target_in_global[1] = Exp_State.frame_Y;
+	Transformation_from_global2robot(target_in_global,target_coordinate);
+	return atan2(Exp_State.frame_Y-State.frame_Y,Exp_State.frame_X-State.frame_X);
 }
-float Kp=1,Kd = 0.5;
+float Kp=0.9,Kd = 0.35;
 float Velocity_controller(float target_coordinate_in_robot_frame[2]){
 	OS_ERR error;
 	float err,d_err;

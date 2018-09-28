@@ -22,12 +22,14 @@ OS_TCB Print_Task_TaskTCB;
 CPU_STK PRINT_TASK_STK[PRINT_TASK_STK_SIZE];
 void Print_task(void *p_arg);
 
-#define GESTURE_CHANGE_TASK_PRIO		6
+//	状态更新任务
+#define GESTURE_CHANGE_TASK_PRIO		5
 #define GESTURE_CHANGE_STK_SIZE 		128
 OS_TCB Gesture_Change_TaskTCB;
 CPU_STK GESTURE_CHANGE_TASK_STK[GESTURE_CHANGE_STK_SIZE];
 void Gesture_Change_task(void *p_arg);
 
+//	控制任务
 #define CTRL_TASK_PRIO		5
 #define CTRL_STK_SIZE 		256
 OS_TCB Ctrl_TaskTCB;
@@ -35,19 +37,11 @@ CPU_STK CTRL_TASK_STK[CTRL_STK_SIZE];
 void CTRL_task(void *p_arg);
 
 void BSP_Init(void);
-void IMU_get_offset(void);
+void IMU_get_offset(void);											
 
-OS_SEM MySem;
-OS_SEM MySem2;
-OS_Q MyQueue;
-OS_FLAG_GRP usart2_flags_group;
-
-extern RB_State State,Exp_State;
-extern float Yaw;
-extern u8 USART2_RX_DAT[11];
-extern u8 Process_finish_flag;
-extern long steps1,steps2,steps3,steps_L,steps_R;
-extern u8 Process_finish_flag_exp_state;
+extern RB_State State,Exp_State;								// 机器人状态以及期望状态结构体
+extern u8 Process_finish_flag;									// 串口2处理完成标志位
+extern u8 Process_finish_flag_exp_state;				// 串口1处理完成标志位
 
 
 
@@ -57,9 +51,8 @@ int main(void)
 	CPU_SR_ALLOC();
 	
 	BSP_Init();
-	
-	OSInit(&err);		    //初始化UCOSIII
-	OS_CRITICAL_ENTER();	//进入临界区			 
+	OSInit(&err);		    													//初始化UCOSIII
+	OS_CRITICAL_ENTER();													//进入临界区			 
 	
 	//创建开始任务
 	OSTaskCreate(  (OS_TCB 	* )&StartTaskTCB,		//任务控制块
@@ -101,15 +94,6 @@ void start_task(void *p_arg)
 	 //使能时间片轮转调度功能,时间片长度为1个系统时钟节拍，既1*5=5ms
 	OSSchedRoundRobinCfg(DEF_ENABLED,1,&err);  
 #endif	
-	
-//	OSSemCreate(&MySem,"My Sem",1,&err);	
-//	OSSemCreate(&MySem2,"My Sem 2",1,&err);	
-//	OSQCreate(&MyQueue,"My Queue",40,&err);
-
-	OSFlagCreate((OS_FLAG_GRP*)&usart2_flags_group,
-						   (CPU_CHAR   *)"usart2_flags_group",
-						   (OS_FLAGS    )0,
-						   (OS_ERR     *)&err);
 
 	OS_CRITICAL_ENTER();	//进入临界区
 	//创建led任务
@@ -174,8 +158,7 @@ void start_task(void *p_arg)
 //	OSTaskSuspend(&Gesture_Change_TaskTCB,&err);		 
 //	OSTaskSuspend(&Print_Task_TaskTCB,&err);		 
 //	OSTaskSuspend(&Ctrl_TaskTCB,&err);		 
-	
-	
+								 
 	OS_CRITICAL_EXIT();	//退出临界区
 	OSTaskDel((OS_TCB*)0,&err);	//删除start_task任务自身
 }
@@ -190,7 +173,6 @@ void Led_task(void *p_arg)
 	}
 }
 
-extern float Yaw;
 void Print_task(void *p_arg)
 {
 	OS_ERR err;
@@ -199,8 +181,8 @@ void Print_task(void *p_arg)
 	{
 		OS_CRITICAL_ENTER();	//进入临界区
 		//Print_IMU_Data();
-		printf("%d\t%d\t%f\t%f\r\n",State.frame_X,State.frame_Y,State.angle,Yaw);	
 		//printf("%f\t%f\r\n",Exp_State.frame_Vx,Exp_State.frame_Vy);
+		printf("%d\t%d\t%f\r\n",State.frame_X,State.frame_Y,State.angle);
 		OS_CRITICAL_EXIT();	//退出临界区
 		OSTimeDlyHMSM(0,0,0,20,OS_OPT_TIME_HMSM_STRICT,&err);
 	}
@@ -249,14 +231,15 @@ void BSP_Init(void){
 	LED_Init();         														//LED初始化	
 	uart_init(115200);															//初始化串口波特率为115200
 	uart2_init(112500);															//初始化串口波特率为115200
-	uart3_init(115200);														  //初始化串口波特率为112500
-	PWM_Init(2800-1,6-1);
-	stop_all();
-	EXTIX_Init();
-	IMU_get_offset();
-	printf("peripherals init complete...\r\n");
-	Process_finish_flag=1;
-	delay_ms(2000);
+	uart3_init(115200);														  //初始化串口波特率为115200
+	PWM_Init(1400-1,3-1);														//初始化PWM频率为168000000/1400/3=40khz
+	stop_all();																			//stop all motor
+	EXTIX_Init();																		//初始化所有外部中断，包括五个编码器中断和2个未使用中断
+	delay_ms(2000);																	//零漂前固定机器人
+	IMU_get_offset();																//IMU获取零漂	
+	printf("peripherals init complete...\r\n");			//完成初始化标志
+	Process_finish_flag=1;													//恢复串口二处理完成标志位
+	delay_ms(1000);																	//真正操作前等待1s给IMU准备好
 }
 
 void IMU_get_offset(void){

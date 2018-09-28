@@ -19,6 +19,7 @@ float my_abs(float num);
 u8 strcmp_real(char str1[3],char str2[3]);
 float rad2deg(float rad);
 float deg2rad(float deg);
+void Transformation_from_global2robot(float target[2],float result[2]);
 
 typedef struct
 {

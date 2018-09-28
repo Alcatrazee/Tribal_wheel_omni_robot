@@ -1,8 +1,5 @@
 #include "common_fcn.h"
 #include "includes.h"
-//
-//
-//
 
 // global varaibles declaration
 
@@ -37,4 +34,11 @@ u8 strcmp_real(char str1[3],char str2[3]){
 	else 
 		return 1;
 }
+
+void Transformation_from_global2robot(float target[2],float result[2]){
+	result[0] = cos(deg2rad(State.angle))*target[0]+sin(deg2rad(State.angle))*target[1]-State.frame_X;
+	result[1] = -sin(deg2rad(State.angle))*target[0]+cos(deg2rad(State.angle))*target[1]-State.frame_Y;
+}
+
+
 

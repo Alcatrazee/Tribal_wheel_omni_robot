@@ -82,7 +82,7 @@ void uart_init(u32 bound){
 
 #define buf_length 13
 
-u8 rec[buf_length];
+char rec[buf_length];
 u8 counter_usart1;
 u8 Process_finish_flag_exp_state = 1;
 extern u8 action_mode;
@@ -167,6 +167,7 @@ void Process(){
 			case 'G':	
 								Exp_State.frame_X = cvt_result[0];
 								Exp_State.frame_Y = cvt_result[1];
+								
 								Exp_State.angle = cvt_result[2];							//fill the array of angle
 								action_mode = position_mode;
 								Motion_ENABLE = 1;
@@ -199,7 +200,10 @@ void split_message(float split_result[usart1_data_num]){
 		a = strtok(NULL,p);	
 	}
 }
+
 //command: Gxxxx xxxx
 //				  xpos ypos
 //			unit: mm
+
+
 
