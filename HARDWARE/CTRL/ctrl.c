@@ -143,9 +143,7 @@ void Cult_pos(int steps_delta[2],float pos[2],float theta2){
 	float WLX,WLY,WRX,WRY;
 	float dis_L,dis_R;
 	float combine_vector[2];															// distance of movement of robot's in it's own frame
-	static float linear_former_vxy[2]={0,0};								// to store the former value of velocity, just used to calculate the accelartion
 	static float pos_temp[2]={0,0};
-	float v_x=0,v_y=0;
 	
 	float dt = 0;		
 	float time_now=0;
@@ -432,16 +430,20 @@ float PID_V(u8 axis){
 #define max_speed 500
 #define min_speed -max_speed
 u8 axis_tracker=0;
+u8 Motion_ENABLE=0;
 void Action(void){
 	float linear_v[3] = {0,0,0};						//control output array
 	
 	//  here we change the velocity depend on the ctrl mode
 	if(action_mode == position_mode)														//position mode:move to the point 
 		{
-			Position_mode();
+			//Position_mode();
+			P2P_algorithm();																				// new point 2 point algorithm
+			Velocity_mode();
 		}else if(action_mode == velocity_mode){
 			Velocity_mode();
 		}
+
 		linear_vxy[2]=Angle_PID(Exp_State.angle);											// angle lock
 		
 		// velocity limitation
@@ -455,15 +457,17 @@ void Action(void){
 		else if(linear_vxy[0]<=min_speed)
 			linear_vxy[0]=min_speed;
 		
-//		if(linear_vxy[2]>=max_speed)
-//			linear_vxy[2]=max_speed;
-//		else if(linear_vxy[2]<=min_speed)
-//			linear_vxy[2]=min_speed;
-		
 		// inverse kinemetic
 		Speed_Moto_Control(linear_vxy,linear_v);
 //		printf("%f\t%f\t%f\r\n",linear_v[0],linear_v[1],linear_v[2]);
-		Move(linear_v);
+		if(Motion_ENABLE)
+			Move(linear_v);
+		else{
+			Run_as_vol(0,motor1);
+			Run_as_vol(0,motor2);
+			Run_as_vol(0,motor3);
+		}
+			
 }
 
 void Calculate_State(void){
@@ -551,10 +555,56 @@ void Velocity_mode(void){
 	linear_vxy[0]+= cos(deg_angle)*tempx+sin(deg_angle)*tempy;			//x axis
 	linear_vxy[1]+= -sin(deg_angle)*tempx+cos(deg_angle)*tempy;			
 	
-	Exp_State.frame_X = State.frame_X;
-	Exp_State.frame_Y = State.frame_Y;
+//	Exp_State.frame_X = State.frame_X;
+//	Exp_State.frame_Y = State.frame_Y;
 }
 
+#define max_velocity 500
+#define min_velocity -max_velocity
 void P2P_algorithm(void){
-	
+	float target_theta=0;
+	float combined_velocity=0;
+	float target_coordinate_in_robot_frame[2]={0};
+	target_theta = Get_theta2(target_coordinate_in_robot_frame);																		//get motion angle in robot frame
+	combined_velocity = Velocity_controller(target_coordinate_in_robot_frame);
+	// velocity limitation
+	if(combined_velocity>=max_velocity)
+		combined_velocity=max_velocity;
+	else if(combined_velocity<=min_velocity)
+		combined_velocity=min_velocity;
+	Exp_State.frame_Vx = cos(target_theta)*combined_velocity;
+	Exp_State.frame_Vy = sin(target_theta)*combined_velocity;
 }
+
+// param: 2axis coordinate which [0] is x axis [1] is y axis
+float Get_theta2(float target_coordinate[2]){	
+	target_coordinate[0] = cos(deg2rad(State.angle))*Exp_State.frame_X-sin(deg2rad(State.angle))*Exp_State.frame_Y-State.frame_X;
+	target_coordinate[1] = sin(deg2rad(State.angle))*Exp_State.frame_X+cos(deg2rad(State.angle))*Exp_State.frame_Y-State.frame_Y;
+	return atan2(target_coordinate[1],target_coordinate[0]);
+}
+float Kp=1,Kd = 0.5;
+float Velocity_controller(float target_coordinate_in_robot_frame[2]){
+	OS_ERR error;
+	float err,d_err;
+
+	float out;
+	static float former_err=0; 
+	float dt = 0;		
+	float time_now=0;
+	static float time_last=0;
+	
+	//get dt
+	time_now = 5*(float)OSTimeGet(&error)/1000;
+	dt = time_now - time_last;
+	time_last = time_now;
+	
+	err = sqrt((target_coordinate_in_robot_frame[0]*target_coordinate_in_robot_frame[0])+(target_coordinate_in_robot_frame[1]*target_coordinate_in_robot_frame[1]));
+	d_err = (err - former_err)/dt;
+	
+	out = Kp*err+Kd*d_err;
+	former_err = err;
+	if(err<=5)
+		out = 0;
+	return out;
+}
+

@@ -199,7 +199,8 @@ void Print_task(void *p_arg)
 	{
 		OS_CRITICAL_ENTER();	//进入临界区
 		//Print_IMU_Data();
-		printf("%f\t%f\t%f\t%f\r\n",State.frame_Vx,State.frame_Vy,State.angle,Yaw);
+		printf("%d\t%d\t%f\t%f\r\n",State.frame_X,State.frame_Y,State.angle,Yaw);	
+		//printf("%f\t%f\r\n",Exp_State.frame_Vx,Exp_State.frame_Vy);
 		OS_CRITICAL_EXIT();	//退出临界区
 		OSTimeDlyHMSM(0,0,0,20,OS_OPT_TIME_HMSM_STRICT,&err);
 	}
@@ -255,6 +256,7 @@ void BSP_Init(void){
 	IMU_get_offset();
 	printf("peripherals init complete...\r\n");
 	Process_finish_flag=1;
+	delay_ms(2000);
 }
 
 void IMU_get_offset(void){

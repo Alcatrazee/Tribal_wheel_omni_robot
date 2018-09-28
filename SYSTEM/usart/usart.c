@@ -87,14 +87,14 @@ u8 counter_usart1;
 u8 Process_finish_flag_exp_state = 1;
 extern u8 action_mode;
 extern RB_State State;
-
+extern u8 Motion_flag;
 void USART1_IRQHandler(void)                	//串口1中断服务程序
 {
 	if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)  //接收中断(接收到的数据必须是0x0d 0x0a结尾)
 	{
 		rec[counter_usart1] =USART_ReceiveData(USART1);//(USART1->DR);	//读取接收到的数据
 		counter_usart1++;
-		if(rec[0]=='G'||rec[0]=='V'){
+		if(rec[0]=='G'||rec[0]=='V'||rec[0]=='S'||rec[0]=='P'){
 			if(rec[counter_usart1-1]=='\n'&&rec[counter_usart1-2]=='\r'){
 				Process_finish_flag_exp_state = 0;
 			}
@@ -154,75 +154,35 @@ void Clear(void){
 }
 
 extern RB_State Exp_State;
-extern 	float Kpvx,Kivx,Kdvx;
 u8 rec_bit=0;
+extern u8 Motion_ENABLE;
+extern float Kp,Kd;
 void Process(){
 	float cvt_result[usart1_data_num]={0};
-	
-	split_message(cvt_result);
-	
-	switch(rec[0]){
-		case 'G':	/*if(i<counter_usart1){
-								for(j=0;j<i;j++){
-									str[j] = rec[j+1];
-								}
-								Exp_State.frame_X = atof(str);
-								
-								for(j=0;j<i;j++){													//clear
-									str[j] = 0;
-								}
-								
-								for(j=i;j<counter_usart1-3;j++){
-									str[j-i] = rec[j+1];
-								}
-								Exp_State.frame_Y = atof(str);
-								
-								for(j=0;j<i;j++){													//clear
-									str[j] = 0;
-								}
-								
-								for(j=i;j<counter_usart1-3;j++){
-									str[j-i] = rec[j+1];
-								}
-								Exp_State.angle = atof(str);							//fill the array of angle
+	if(rec[0]=='S')
+		Motion_ENABLE=!Motion_ENABLE;
+	else{
+		split_message(cvt_result);
+		switch(rec[0]){
+			case 'G':	
+								Exp_State.frame_X = cvt_result[0];
+								Exp_State.frame_Y = cvt_result[1];
+								Exp_State.angle = cvt_result[2];							//fill the array of angle
 								action_mode = position_mode;
-							}*/
-							Exp_State.frame_X = cvt_result[0];
-							Exp_State.frame_Y = cvt_result[1];
-							Exp_State.angle = cvt_result[2];							//fill the array of angle
-							action_mode = position_mode;
-							break;
-		case 'V':	/*if(i<counter_usart1){
-								for(j=0;j<i;j++){													//fill the array of Vx
-									str[j] = rec[j+1];
-								}
-								Exp_State.frame_Vx = atof(str);
-								
-								for(j=0;j<i;j++){													//clear
-									str[j] = 0;
-								}
-								
-								for(j=i;j<counter_usart1-3;j++){					//fill the array of Vy
-									str[j-i] = rec[j+1];
-								}
-								Exp_State.frame_Vy = atof(str);
-								
-								for(j=0;j<i;j++){													//clear
-									str[j] = 0;
-								}
-								
-								for(j=i;j<counter_usart1-3;j++){					//fill the array of angle
-									str[j-i] = rec[j+1];
-								}
-								
-								Exp_State.angle = atof(str);
+								Motion_ENABLE = 1;
+								break;
+			case 'V':	
+								Exp_State.frame_Vx = cvt_result[0];
+								Exp_State.frame_Vy = cvt_result[1];
+								Exp_State.angle = cvt_result[2];							//fill the array of angle
 								action_mode = velocity_mode;
-							}*/
-							Exp_State.frame_Vx = cvt_result[0];
-							Exp_State.frame_Vy = cvt_result[1];
-							Exp_State.angle = cvt_result[2];							//fill the array of angle
-							action_mode = velocity_mode;
-							break;
+								Motion_ENABLE = 1;
+								break;
+			case 'P':
+								Kp = cvt_result[0];
+								Kd = cvt_result[1];
+			printf("%f\t%f\r\n",Kp,Kd);
+		}
 	}
 }
 
@@ -232,7 +192,7 @@ void split_message(float split_result[usart1_data_num]){
 	const char *p = " ";
 	a = strtok(rec,p);	
 	for(i=0;i<4;i++){
-		if(strcmp("G",a)&&strcmp("V",a)){
+		if(strcmp("G",a)&&strcmp("V",a)&&strcmp("P",a)){
 			split_result[j] = atof(a);
 			j++;
 		}
