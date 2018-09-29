@@ -40,6 +40,7 @@ void BSP_Init(void);
 void IMU_get_offset(void);											
 
 extern RB_State State,Exp_State;								// 机器人状态以及期望状态结构体
+extern State_in_RobotFrame Robot_Velocity;			// 机器人坐标系下的速度结构体
 extern u8 Process_finish_flag;									// 串口2处理完成标志位
 extern u8 Process_finish_flag_exp_state;				// 串口1处理完成标志位
 
@@ -173,6 +174,8 @@ void Led_task(void *p_arg)
 	}
 }
 
+
+
 void Print_task(void *p_arg)
 {
 	OS_ERR err;
@@ -182,7 +185,7 @@ void Print_task(void *p_arg)
 		OS_CRITICAL_ENTER();	//进入临界区
 		//Print_IMU_Data();
 		//printf("%f\t%f\r\n",Exp_State.frame_Vx,Exp_State.frame_Vy);
-		printf("%d\t%d\t%f\r\n",State.frame_X,State.frame_Y,State.angle);
+		printf("%f\t%f\t%f\t%f\t%f\t%f\r\n",State.frame_Vx,State.frame_Vy,State.angle,Robot_Velocity.frame_Vx,Robot_Velocity.frame_Vy,Robot_Velocity.omega);
 		OS_CRITICAL_EXIT();	//退出临界区
 		OSTimeDlyHMSM(0,0,0,20,OS_OPT_TIME_HMSM_STRICT,&err);
 	}

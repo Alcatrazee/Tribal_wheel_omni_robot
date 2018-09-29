@@ -6,7 +6,7 @@
 
 float Kp_x,Ki_x,Kd_x;																						//parameter needed to be made
 short exp_x=0,exp_y=0;																					//position expected
-float linear_vxy[3]={0};																				//linear velocity of the robot,calculated by the expected velocity,not the current velocity
+float linear_vxy[3]={0};																				//linear velocity of the robot,calculated by the expected velocity,not the current velocity,index 0 refers to x axis
 u8 action_mode=position_mode;
 
 extern RB_State State;
@@ -135,6 +135,7 @@ float Angle_PID(float exp_angle){
 //	the whole algrithm can be rewrite,  1. get theta3 first,theta3 is the diretion of the movemont on the global frame,the we can do whatever we want,it might save some time,just might...[
 //	output : mm
 #define radius 38.0f
+extern State_in_RobotFrame Robot_Velocity;
 void Cult_pos(int steps_delta[2],float pos[2],float theta2){
 	OS_ERR err;
 	float distance = 0.0f;
@@ -165,6 +166,9 @@ void Cult_pos(int steps_delta[2],float pos[2],float theta2){
 	
 	combine_vector[0] = WLX+WRX;
 	combine_vector[1] = WLY+WRY;
+	
+	Robot_Velocity.frame_Vx = combine_vector[0]/dt;
+	Robot_Velocity.frame_Vy = combine_vector[1]/dt;
 	
 	theta1 = atan2(combine_vector[1],combine_vector[0]);
 	
@@ -409,6 +413,46 @@ float PID_V(u8 axis){
 	return out;
 }
 
+extern State_in_RobotFrame Robot_Velocity;
+extern State_in_RobotFrame Exp_Robot_Velocity;
+float PID_V_forP2P(u8 axis){
+	float Kpvx = 0.012,Kivx = 0.0005,Kdvx = 0.08;
+	float Kpvy = 0.012,Kivy = 0.0005,Kdvy = 0.08;
+	float out = 0;
+	float error_v=0;
+	float former_err=0;
+	static float former_err_x=0,former_err_y=0,former_former_err_x=0,former_former_err_y=0;
+	float A=0;
+	float Kp=0,Ki=0,Kd=0;
+	switch(axis){
+		case Axis_x: 	error_v = Exp_Robot_Velocity.frame_Vx - Robot_Velocity.frame_Vx;
+									A = error_v-2*former_err_x+former_former_err_x;	
+									Kp = Kpvx;	
+									Ki = Kivx;  
+									Kd = Kdvx;	
+									former_former_err_x = former_err_x;
+									former_err_x=error_v;
+									break;
+		case Axis_y: 	error_v = Exp_Robot_Velocity.frame_Vy - Robot_Velocity.frame_Vy;
+									A = error_v-2*former_err_y+former_former_err_y;	
+									Kp = Kpvy;	
+									Ki = Kivy; 
+									Kd = Kdvy;	
+									former_former_err_y = former_err_y; 
+									former_err_y=error_v;
+									break;
+	}
+	
+	out = Kp*(error_v-former_err)+Ki*error_v+Kd*A;							
+	
+	if(out>max_fake_vol)
+		out = max_fake_vol;
+	else if(out<min_fake_vol)
+		out = min_fake_vol;
+	
+	return out;
+}
+
 
 // function name: Action
 // 
@@ -425,7 +469,8 @@ void Action(void){
 		//Position_mode();
 		P2P_position_mode();
 	}else if(action_mode == velocity_mode){
-		Velocity_mode();
+		//Velocity_mode();
+		Velocity_mode_for_P2P();
 	}
 
 	linear_vxy[2]=Angle_PID(Exp_State.angle);											// angle lock
@@ -501,7 +546,7 @@ void Position_mode(void){
 	#ifdef USING_DOUBLE_LOOP_CTRL
 		Exp_State.frame_Vy=PID_POS(Axis_y);
 		Exp_State.frame_Vx=PID_POS(Axis_x);
-		tempx = PID_V(Axis_x);
+		tempx = PID_V(Axis_x);		
 		tempy = PID_V(Axis_y);		
 	#else
 		tempx=PID_POS(Axis_x);
@@ -520,7 +565,7 @@ void Position_mode(void){
 
 void P2P_position_mode(void){
 		P2P_algorithm();																				// new point 2 point algorithm
-		Velocity_mode();
+		Velocity_mode_for_P2P();
 }
 void Velocity_mode(void){
 	float tempx,tempy;
@@ -533,12 +578,19 @@ void Velocity_mode(void){
 	
 	linear_vxy[0]+= cos(deg_angle)*tempx+sin(deg_angle)*tempy;			//x axis
 	linear_vxy[1]+= -sin(deg_angle)*tempx+cos(deg_angle)*tempy;			
-	
-//	Exp_State.frame_X = State.frame_X;
-//	Exp_State.frame_Y = State.frame_Y;
 }
 
-#define max_velocity 500
+void Velocity_mode_for_P2P(void){
+	float tempx,tempy;
+	
+	tempx = PID_V_forP2P(Axis_x);
+	tempy = PID_V_forP2P(Axis_y);		
+	
+	linear_vxy[0]+=tempx;
+	linear_vxy[1]+=tempy;
+}
+
+#define max_velocity 400
 #define min_velocity -max_velocity
 void P2P_algorithm(void){
 	float target_theta=0;
@@ -552,8 +604,8 @@ void P2P_algorithm(void){
 	else if(combined_velocity<=min_velocity)
 		combined_velocity=min_velocity;
 	
-	Exp_State.frame_Vx = cos(target_theta)*combined_velocity;
-	Exp_State.frame_Vy = sin(target_theta)*combined_velocity;
+	Exp_Robot_Velocity.frame_Vx = cos(target_theta)*combined_velocity;
+	Exp_Robot_Velocity.frame_Vy = sin(target_theta)*combined_velocity;
 }
 
 // param: 2axis coordinate which [0] is x axis [1] is y axis
@@ -562,7 +614,7 @@ float Get_theta2(float target_coordinate[2]){
 	target_in_global[0] = Exp_State.frame_X;
 	target_in_global[1] = Exp_State.frame_Y;
 	Transformation_from_global2robot(target_in_global,target_coordinate);
-	return atan2(Exp_State.frame_Y-State.frame_Y,Exp_State.frame_X-State.frame_X);
+	return atan2(target_coordinate[1],target_coordinate[0]);
 }
 float Kp=0.9,Kd = 0.35;
 float Velocity_controller(float target_coordinate_in_robot_frame[2]){

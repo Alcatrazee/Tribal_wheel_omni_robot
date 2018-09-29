@@ -35,6 +35,12 @@ typedef struct
 	float   angle_offset;
 }RB_State;
 
+typedef struct
+{
+	float 	frame_Vx;
+	float 	frame_Vy;
+	float 	omega;
+}State_in_RobotFrame;
 
 
 

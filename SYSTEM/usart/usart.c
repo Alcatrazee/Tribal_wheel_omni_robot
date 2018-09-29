@@ -157,6 +157,7 @@ extern RB_State Exp_State;
 u8 rec_bit=0;
 extern u8 Motion_ENABLE;
 extern float Kp,Kd;
+extern State_in_RobotFrame Exp_Robot_Velocity;
 void Process(){
 	float cvt_result[usart1_data_num]={0};
 	if(rec[0]=='S')
@@ -173,8 +174,8 @@ void Process(){
 								Motion_ENABLE = 1;
 								break;
 			case 'V':	
-								Exp_State.frame_Vx = cvt_result[0];
-								Exp_State.frame_Vy = cvt_result[1];
+								Exp_Robot_Velocity.frame_Vx = cvt_result[0];
+								Exp_Robot_Velocity.frame_Vy = cvt_result[1];
 								Exp_State.angle = cvt_result[2];							//fill the array of angle
 								action_mode = velocity_mode;
 								Motion_ENABLE = 1;

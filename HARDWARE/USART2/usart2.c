@@ -146,10 +146,20 @@ void Data_Process(void){
 }
 
 
-
+extern State_in_RobotFrame Robot_Velocity;
 void IMUdata_Serialization(void){
+	OS_ERR err;
 	float gain=0;
 	static float former_angle=0,c_angle=0;
+	
+	float dt = 0;		
+	float time_now=0;
+	static float time_last=0;
+	//get dt
+	time_now = 5*(float)OSTimeGet(&err)/1000;
+	dt = time_now - time_last;
+	time_last = time_now;
+	
 	c_angle = Yaw;
 	gain = c_angle-former_angle;
   if(my_abs(gain)>300){
@@ -159,6 +169,7 @@ void IMUdata_Serialization(void){
 				gain = my_abs(gain)-360;
 	}
 	continue_Yaw = continue_Yaw + gain;
+	Robot_Velocity.omega = gain/dt;
 	former_angle = c_angle;
 }
 
